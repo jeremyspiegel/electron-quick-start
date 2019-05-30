@@ -1,5 +1,5 @@
 // Modules to control application life and create native browser window
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, BrowserView} = require('electron')
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -10,13 +10,42 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    x: 0,
+    y: 0,
+    frame: false,
     webPreferences: {
       nodeIntegration: true
     }
   })
 
   // and load the index.html of the app.
-  mainWindow.loadFile('index.html')
+  mainWindow.webContents.loadURL('about:blank')
+  mainWindow.webContents.executeJavaScript(
+    `document.body.innerHTML = '<div style="position: absolute; top: 0; left: 0; right: 0; height: 25px; -webkit-app-region: drag"></div><button onclick="alert()" style="position: absolute; left: 50px; -webkit-app-region: no-drag">This button in the main window is clickable!</button>'`
+  )
+
+  let browserViewWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    x: 1000,
+    y: 0,
+    frame: false,
+    webPreferences: {
+      nodeIntegration: true
+    }
+  })
+  browserViewWindow.webContents.loadURL('about:blank')
+  browserViewWindow.webContents.executeJavaScript(
+    `document.body.innerHTML = '<div style="position: absolute; top: 0; left: 0; right: 0; height: 25px; -webkit-app-region: drag"></div>'`
+  )
+  let browserView = new BrowserView()
+  browserViewWindow.addBrowserView(browserView)
+  const { width, height } = browserViewWindow.getContentBounds()
+  browserView.setBounds({ x: 0, y: 0, width, height })
+  browserView.webContents.loadURL("about:blank")
+  browserView.webContents.executeJavaScript(
+    `document.body.innerHTML = '<button onclick="alert()" style="position: absolute; left: 50px; -webkit-app-region: no-drag">This button in the browser view is not clickable!</button>'`
+  )
 
   // Open the DevTools.
   // mainWindow.webContents.openDevTools()
